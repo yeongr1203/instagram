@@ -1,0 +1,117 @@
+백앤드 => restful api 사용.
+
+프론트앤드 = ajax
+
+오늘은 백엔드로 작업. 통신할 것.
+어제까지 프론트앤드 끝.
+
+method: get, post
+
+주소값구분은 / 이것으로 작성.
+예시) 
+/list       = get
+/detail     = get
+/write      =get/post
+/mod        =get/post
+/del        =get or post
+-> get방식, post로 구분.
+
+<method>
+post
+get
+put
+delete
+
+= 화면안에 담당은 앱안에 있다. 앱안에 뿌리는 내용 다 들어있음.
+= 백앤드는 데이터 왔다갔다 처리만 해줌.
+
+/board (get방식) => /list(리스트) =>select문이 여러개
+/board/1 (get)  => /detail(디테일)=>select문이 한개         // /feed/rest/1 () => 디테일
+/board (post방식) => write(글쓰기)
+/board (put방식) => mod(수정)
+/board (delete) => delete(삭제)
+
+-- today
+=> 주소값으로 구분하는 것.
+/feed/rest (get) = 게시물 쓰기
+/feed/rest/1 (post) = 게시물 등록 // post로 작업하는 것. 이건 등록!
+/feed/rest (put) = 게시물 수정
+/feed/rest/1(삭제하고자하는 PK값) (delete) = 게시물 삭제
+
+
+--- RESTful API  검색.
+RESTful api 에서 이것으로 작성한다.
+
+
+-- 부메랑 설치.
+: post방식만 되는 것을 put, delete로 바꿔주는 것.
+
+크롬 -> 도구더보기 -> 확장프로그램 -> 웹스토어열기 -> rest client 검색
+-> Boomerang - SOAP & REST Client 설치
+-> 웹페이지에서 즐겨찾기 별 옆에 장난감모양 클릭해서 부메랑 클릭
+-> quick request 클릭
+-> 주소값(http://localhost/feed/rest)을 복사해서 넣어 send 보내면
+-> 오른쪽 아래에 결과가 나타남. 
+-> 보내는 방식에 따라 다름.
+-> 왼쪽이 날리는것. 오른쪽이 결과 보는 것.
+
+피드컨트롤 작성 후 디버깅으로 확인.
+피드 모델에서 작성함.
+
+FileUtils 파일 생성.
+Application 에 require_once "application/utils/FileUtils.php"; 추가.
+
+
+-----------------------------
+
+2022-06-29 수업일지
+
+오전 no.3 = 피드를 뿌리는 작업; ==> 어려움.
+
+
+------------------------
+
+2022-06-30
+
+https://swiperjs.com/get-started => 스와이퍼 참조링크
+
+toggle
+=>불린형, 숫자형
+불린?
+
+숫자?
+
+
+-----------------------------
+
+2022-07-01
+
+(오후)
+나 = 로그인한 사람.
+피드 주인 = 내가 들어간 피드 주인
+
+// 나의 피드인가
+
+
+
+// 남의 피드인가.
+남의 피드 일 경우
+- 팔로우 취소(지금 내가 팔로우 하고 있음)
+- 맞팔로우(나는 팔로우 X, 피드 주인이 나를 팔로우 하는 경우)
+- 팔로우 
+(나(로그인한사람) -> 피드주인 = 팔로우X, 피드 주인 -> 나 = 팔로우X)
+
+2가지 종류 데이터베이스 가져올 것.
+내가 주인인지 아닌지는 <?=$this->data->iuser?>로 구분.
+
+아래 각각 쿼리문 작성.
+내가 피드주인 팔로우 했나? iuser = 피드주인 pk, iuser=로그인한 나의 pk
+피드주인 내가 팔로우 했나?
+=> test 작성
+SELECT iuser, email, nm, cmt, mainimg
+		, (SELECT COUNT(ifeed) FROM t_feed WHERE iuser = 3 ) AS feedCnt
+		, (SELECT COUNT(fromiuser) FROM t_user_follow WHERE fromiuser = 3 AND toiuser = 2 ) AS youme
+		, (SELECT COUNT(fromiuser) FROM t_user_follow WHERE fromiuser = 2 AND toiuser = 3 ) AS meyou
+FROM t_user
+WHERE iuser = 3
+;	

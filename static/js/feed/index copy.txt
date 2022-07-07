@@ -1,0 +1,339 @@
+(function() {   // 새로운 게시물의 a태그를 가르킴.
+    const btnNewFeedModal = document.querySelector('#btnNewFeedModal'); // header의 btnNewFeedModal 의 id값을 넣음.
+    // 바로 실행되면서 btnNewFeedModal 얘는 여기 안에서만 실행할 수 있는 지역변수가 됨.
+    // 만약 btnNewFeedModal이 안들어오면 null이기 때문에 if문 실행이 안됨.
+    // 실행이 된다면 btnNewFeedModal안에 값이 있다는 뜻.
+    if(btnNewFeedModal) {
+        const modal = document.querySelector('#newFeedModal');  // id 값이 btnNewFeedModal인 애 // document => 전수조사
+        const body =  modal.querySelector('#id-modal-body');    // modal안에 있는 id 값이 id-modal-body 애를 찾음.
+        const frmElem = modal.querySelector('form');            // form태그를 말함.
+        const btnClose = modal.querySelector('.btn-close');     
+
+        //이미지 값이 변하면
+        frmElem.imgs.addEventListener('change', function(e) {   // 원래 점은 메소드접근에 사용하지만, 폼태그에서는 id나 이름에 접근이 가능하다(자식인경우에만 해당.) 
+        // form태그에서 자식이 imgs인 애한테 addEventListener을 건다. 이벤트(체인지가 된다면)가 실행된다면,
+        // if가 true일경우, (이미지가 선택되었다면) 아래의 내용을 실행하겠다.
+            // console.log(`length: ${e.target.files.length}`);    // 체인지 이미지 수량체크 가능
+            if(e.target.files.length > 0) {  // 즉, 파일을 선택했다. 취소를 누르지않고 확인(열기든 뭐든)을 눌렀다는 뜻.
+            // e.target은 (imgs)input type이 file인 친구의 length값이 0보다크다 
+                // 기존 버튼이 body의 버튼이 지워지고 innerHTML의 내용이 대체되기 때문에 앞에는 싹 다 날아감.
+                body.innerHTML = `
+                    <div>
+                        <div class="d-flex flex-md-row">
+                            <div class="flex-grow-1 h-full"><img id="id-img" class="w300"></div>
+                            <div class="ms-1 w250 d-flex flex-column">                
+                                <textarea placeholder="문구 입력..." class="flex-grow-1 p-1"></textarea>
+                                <input type="text" placeholder="위치" class="mt-1 p-1">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <button type="button" class="btn btn-primary">공유하기</button>
+                    </div>
+                `;
+                // 위치값은 옵션. 없어도 됨.
+                // 내 컴퓨터에(브라우저에) 뿌리기 위해서 작성한 내용.
+                /*
+                e.target은 form태그 안의 input 태그를 말함.
+                여러개 선택시 이름순으로 먼저 들어감. 그래서 0번방에 있는 친구
+                */
+                // 먼저 문서에 집어 넣고 아래에querySelector 해야함.
+
+                const imgElem = body.querySelector('#id-img');
+
+                const imgSource = e.target.files[0];    // 0번방에 있는 값이 참조되어 imgSource에 넘어감.
+                const reader = new FileReader();    // 객체화.
+                reader.readAsDataURL(imgSource);    // readAsDataURL (데이터URL을 통해 읽어오겠다.=>즉 각 방에 들어간 이미지의 위치값을 불러옴.)
+                reader.onload = function() {        // 보통이벤트 걸때, on / set 사용. on은 로딩이 됐다면, 이 함수를 실행해.
+                    // #id-img.src 값을 로딩이 끝난 값을 넣어줘라. 즉, 파일을 불러오는 것.
+                    imgElem.src = reader.result;
+                    
+                };  // 내컴퓨터 이미지를 띄울 수 있는 방법.
+
+                const shareBtnElem = body.querySelector('button');  // body셀렉터에서 button 태그인 친구를 찾겠다.
+                shareBtnElem.addEventListener('click', function() { // 공유하기 버튼에 클릭하면 이벤트 실행.
+                    const files = frmElem.imgs.files;   // frmElem.imgs.files 참조값이 넘어감.
+                    
+                    // 공유하기 누르면 아래 실행이 됨.
+                    // 인덱스로 데이타를 던질 때 FormData를 꼭 사용해야함.
+                    const fData = new FormData();   // 메모리상 폼태그 생성. create element form 과같다.
+                    for(let i=0; i<files.length; i++) { // form태그에 file length만큼 돌아감.
+                        // fData.append('imgs', files[i]);
+                        fData.append('imgs[]', files[i]);   // rest작업으로 수정함.
+                        // imgs []배열로 받음.
+                    }
+                    fData.append('ctnt', body.querySelector('textarea').value);
+                    fData.append('location', body.querySelector('input[type=text]').value);
+                    // 총 6개가 formdata에 박힘.
+
+                    fetch('/feed/rest', {   // restful api사용할 것. 그래서 rest로 수정함.
+                        method: 'post', // post방식으로 fdata를 넣음.
+                        body: fData
+                    }).then(res => res.json())
+                        .then(myJson => {
+                            console.log(myJson);
+
+                            if(myJson.result) {                                
+                                btnClose.click();
+                            }
+                        });
+
+                });
+            }
+        });
+
+        // 버튼태그 만들고, 클래스명 지정, 
+        // button 태그와 input 타입이 button에 등록이라는 text 찍는 방법이 다름.
+        // button태그 => <button>등록</button> / <input type="button" value="등록">
+        btnNewFeedModal.addEventListener('click', function() {
+            const selFromComBtn = document.createElement('button');
+            selFromComBtn.type = 'button';
+            selFromComBtn.className = 'btn btn-primary';
+            selFromComBtn.innerText = '컴퓨터에서 선택';    // 버튼안에 text가 바뀐다.
+            selFromComBtn.addEventListener('click', function() {
+                frmElem.imgs.click();   // 클릭하면 
+            });
+            body.innerHTML = null;  // body부분 전체 삭제하고
+            body.appendChild(selFromComBtn);    // 삭제한 부분에 btn을 넣음 
+            // 넣은 버튼에 이벤트가 걸려 있다. 걸린 이벤트는 frmElem의 (form태그)의 자식인 imgs의 이벤트
+        });
+    }
+
+    function moveToFeedWin(iuser) {
+        location.href=`/user/feedwin?iuser=${iuser}`;   // 이 부분도 내가 정하는 것.
+    }
+
+    const feedObj = {
+        limit: 20,
+        itemLength: 0,
+        currentPage: 1,
+        swiper: null,   // 스와이퍼 객체 추가.
+        loadingElem: document.querySelector('.loading'),
+        containerElem : document.querySelector('#container'),  // div생성해서 아이콘 넣을 예정.
+
+        //통신먼저
+        getFeedList: function() {
+            this.showLoading();
+            /*  gif 확인용 -- 돌아가는지 확인! => 통신끝나고 
+                setTimeout( () => {
+                    this.hideLoading();
+                }, 1000); 
+            */
+            const param = {
+                page: this.currentPage++,
+            }
+            fetch('/feed/rest' + encodeQueryString(param))
+            .then(res=>res.json())
+            .then(list => {
+                this.makeFeedList(list);
+            })
+            .catch(e => {
+                console.error(e);
+                this.hideLoading();
+            });
+        },
+
+        // feed list 받아옴.
+        makeFeedList : function (list) {        // 얘가 반복문.
+            if(list.length !== 0) {
+                list.forEach(item => {
+                    // this.makeFeedItem(item);
+                    const divItem = this.makeFeedItem(item);
+                    this.containerElem.appendChild(divItem);
+                });
+            }
+            // 혹시 스와이퍼가 null이 아니면,
+            if(this.swiper !== null) {
+                this.swiper = null;
+            }
+            this.swiper = new Swiper('.swiper', {  // Swiper에 .swiper 와 navigation 2개를 보냄.
+                navigation : {
+                    nextEl : '.swiper-button-next',
+                    prevEl : '.swiper-button-prev'
+                },
+                pagination: {
+                    el : '.swiper-pagination'
+                },
+                alowTouchMove : false,
+                direction : 'horizontal',    // direction 은 방향
+                loop: false,    // 무한 => true, 아니면 false
+            });
+            this.hideLoading();     // 받아오는 것.
+        },
+
+        makeFeedItem: function(item) {  // 얘는 정보를 얻어옴. 
+            console.log(item);
+            const divContainer = document.createElement('div');
+            divContainer.className = 'item mt-3 mb-3';
+            
+            const divTop = document.createElement('div');
+            divContainer.appendChild(divTop);
+            
+            const regDtInfo = getDateTimeInfo(item.regdt);  // 몇시간 몇분전인지 그 값이 들었음.
+            divTop.className = 'd-flex flex-row ps-3 pe-3';
+
+            const writerImg = `<img src='/static/img/profile/${item.iuser}/${item.mainimg}'
+                                onerror='this.error=null; this.src="/static/img/profile/defaultProfileImg_100.gif"'>`;
+            
+            divTop.innerHTML = `
+                <div class="d-flex flex-column justify-content-center">
+                    <div class="circleimg w70 h70 pointer feedwin">${writerImg}</div>
+                </div>
+                <div class="p-3 flex-grow-1">
+                    <div><span class="pointer feedwin bold"> ${item.writer}</span></div>
+                    <div>${item.location === null ? '' : item.location}</div>
+                </div>
+            `;
+
+            // 피드 등록한 사람.
+            const feedwinList = divTop.querySelectorAll('.feedwin');
+            feedwinList.forEach( el => {
+                el.addEventListener('click', () => {
+                    moveToFeedWin(item.iuser);
+                });
+            });
+
+
+            //스와이퍼
+            const divImgSwiper = document.createElement('div'); 
+            divContainer.appendChild(divImgSwiper);
+            divImgSwiper.className = 'swiper item_img';
+            divImgSwiper.innerHTML = `
+                <div class="swiper-wrapper align-items-center"></div>
+                <div class="swiper-pagination"></div>
+                <div class="swiper-button-prev"></div>
+                <div class="swiper-button-next"></div>
+            `;
+            const divSwiperWrapper = divImgSwiper.querySelector('.swiper-wrapper');
+
+            // 6/29스와이프 돌리기 전.
+            // const imgObj = item.imgList[0];
+            // const divSwiperSlide = document.createElement('div');
+            // divSwiperWrapper.appendChild(divSwiperSlide);
+            // divSwiperSlide.classList.add('swiper-slide');
+
+            // const img = document.createElement('img');
+            // divSwiperSlide.appendChild(img);
+            // img.className = 'w614';
+            // img.src = `/static/img/feed/${item.ifeed}/${imgObj.img}`;
+
+            // imgList forEach 사용
+            item.imgList.forEach(function(imgObj) {
+                const divSwiperSlide = document.createElement('div');
+                divSwiperWrapper.appendChild(divSwiperSlide);
+                divSwiperSlide.classList.add('swiper-slide');
+
+                const img = document.createElement('img');
+                divSwiperSlide.appendChild(img);
+                img.className = 'w100p_mw614';
+                img.src = `/static/img/feed/${item.ifeed}/${imgObj.img}`;
+            });
+
+            // ctnt 추가
+            const divBtns = document.createElement('div');
+            divContainer.appendChild(divBtns);
+            divBtns.className = 'favCont p-2 d-flex flex-row';
+
+            const heartIcon = document.createElement('i');
+            divBtns.appendChild(heartIcon);
+            // divBtns.appendChild();
+            heartIcon.className = 'fa-heart pointer rem1_5 me-3';
+            heartIcon.classList.add(item.isFav === 1 ? 'fas' : 'far');
+            // fas => 색이 채워진 하트, far => 실선만 주는 하트
+            // 하트 넣고 빼기 == 토글사용.
+            heartIcon.addEventListener('click', () => {
+                
+                // post메서드 구현 방법.찾아서 참고.
+                let method = 'POST';    // 기본 ==> insert(post)
+                if(item.isFav === 1) {  //delete 해야함. (1은 0으로 바꿔줘야함. 현재 1인 상태)
+                    method = 'DELETE';
+                } 
+                
+                fetch(`/feed/fav/${item.ifeed}`, {
+                    'method' : method,
+                }).then(res => res.json())
+                .then(res => {
+                    // console.log(result);
+                    if(res.result) {
+                        item.isFav = 1 - item.isFav;        // 0 >1, 1>0
+                        if(item.isFav === 0 ) {     // 0은 좋아요 취소
+                            heartIcon.classList.remove('fas');
+                            heartIcon.classList.add('far');
+                        } else {    // 좋아요 처리.
+                            heartIcon.classList.remove('far');
+                            heartIcon.classList.add('fas');
+                        }
+                    } else {    
+                        alert('좋아요를 할 수 없습니다.');
+                    }
+                })
+                .catch(e=> {
+                    alert('네트워크에 이상이 있습니다.');
+                });
+            });
+            
+            // DM
+            const divDm = document.createElement('div');
+            divBtns.appendChild(divDm);
+            divDm.className = 'pointer ';    // pointer는 마우스 올렸을 때, a태그처럼 커서 포인터되는 것.
+            divDm.innerHTML = `
+            <svg aria-label="다이렉트 메세지" class="_8-yf5 " color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24"><line fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="2" x1="22" x2="9.218" y1="3" y2="10.083"></line><polygon fill="none" points="11.698 20.334 22 3.001 2 3.001 9.218 10.084 11.698 20.334" stroke="currentColor" stroke-linejoin="round" stroke-width="2"></polygon></svg>
+            `;
+            
+            // 좋아요 수
+            const divFav = document.createElement('div');
+            divContainer.appendChild(divFav);
+            divFav.className = 'p-3 d-none ';
+            const spanFavCnt = document.createElement('span');
+            divFav.appendChild(spanFavCnt);
+            spanFavCnt.className = 'bold';
+            spanFavCnt.innerHTML = `좋아요 ${item.favCnt}개`;
+            // 일단은 좋아요~ 안뜬상태에서 클릭채서 수를 채우면 나타나도록 함.
+            if(item.favCnt > 0) {
+                divFav.classList.remove('d-none');  // 
+            }
+            
+            // ctnt
+            if(item.ctnt !== null && item.ctnt !== '') {    // null과 빈칸이 아닐때 실행.
+                const divCtnt = document.createElement('div');
+                divContainer.appendChild(divCtnt);
+                divCtnt.innerText = item.ctnt;
+                divCtnt.className = 'itemCtnt p-3';
+                const feedTime = document.createElement('div');
+                feedTime.innerText = `${regDtInfo}`;
+                divContainer.appendChild(feedTime);
+                feedTime.className = 'feedTimeF p-3';
+                
+            }
+            
+            // 
+            const divCmtList = document.createElement('div');
+            divContainer.appendChild(divCmtList);
+
+            const divCmt = document.createElement('div');
+            divContainer.appendChild(divCmt);
+            const divCmtForm = document.createElement('div');
+            divCmtForm.className = 'd-flex flex-row';
+            divCmt.appendChild(divCmtForm);
+
+            divCmtForm.innerHTML = `
+                <input type="text" class="flex-grow-1 my_input back_color p-2" placeholder="댓글을 입력하세요...">
+                <button type="button" class="btn btn-outline-primary">등록</button>
+            `;
+
+            return divContainer;
+        },
+
+        // 통신먼저
+        showLoading: function() { 
+            this.loadingElem.classList.remove('d-none'); 
+        },
+        hideLoading: function() { 
+            this.loadingElem.classList.add('d-none');
+        }
+
+    }
+
+    feedObj.getFeedList();
+
+})();
