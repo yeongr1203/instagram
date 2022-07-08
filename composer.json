@@ -1,0 +1,13 @@
+{    
+    "autoload": {
+        "psr-4" : {     
+            "ws\\" : "ws/",
+            "application\\": "application"
+        }
+    },
+    "require": {
+        "cboden/ratchet": "^0.4.4"
+    }
+}
+
+// "psr-4" 는 sutoload하는 버젼.
